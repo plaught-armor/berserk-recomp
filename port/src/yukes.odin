@@ -1,5 +1,7 @@
 // The game's own IOP module (the nameless 0x24700-byte IRX in PAC 098):
-// the Yukes sound and streaming service, RPC ids 0x300 and 0x301.
+// the Yukes sound and streaming service, RPC ids 0x300 and 0x301. Layouts
+// and names are from the DWARF its debug build left in IOP memory (source
+// D:\ps2src\milmil\device\yiop_service\iop).
 //
 // The EE side queues jobs (0x276d60) that a worker thread (0x277000) sends
 // with sifCallRpc. Every job receives into its own send buffer, and the
@@ -23,22 +25,42 @@ yukes_300 :: proc(fno: u32, buf: []u8, send_size: u32) -> (ok: bool) {
 	return fno == 3
 }
 
-// fno 0x6a: 64-byte block at 0x395c40, sent once at init (0x277390).
-// fno 0x6c: 128-byte voice/stream slot at 0x395cc0 + 0x80*n (0x277390,
-// 0x2775a0); its callback ignores the reply.
-// fno 0x6d: 64-byte block at 0x395dc0 + 0x40*n (0x277650).
-// fno 0x67, 0x68: start and stop the stream in slot n, 128 bytes at
-// 0x395e40 + 0x80*n (0x2779b0, 0x277840). The game sends the slot through
-// its uncached mirror, and the slot holds its own address (word 7), so the
-// real module DMAs status back into it; the callback (0x277790) also copies
-// the reply over the slot. The stream object (0x27a980) waits for word 3 to
-// read 3 after a start and for word 2 to read 2 after a stop. With no audio,
-// both are reported done at once.
+// Every 0x301 command starts with a tagYIOPCmdID, eight words: client
+// (0 EE), cmd_type (0 RPC, 1 RPC thread), rpc_stat, thread_stat, size,
+// callbackfunc, callbackfunc_param and src_addr, the command's own EE
+// address. The game sends its command blocks through their uncached
+// mirror, so the real module DMAs status back into them, and the callback
+// (0x277790) also copies the reply over the block for 0x68.
 @(private = "file")
-SLOT_STATE :: 2
+YIOP_RPC_STAT :: 2 // word; END when the call is done
 @(private = "file")
-SLOT_READY :: 3
+YIOP_THREAD_STAT :: 3 // word; END_OK when the thread the call started is done
+@(private = "file")
+YIOP_RPC_END :: 2
+@(private = "file")
+YIOP_THREAD_END_OK :: 3
 
+// The commands, each a header and then (byte offsets):
+// 0x6a tagspuCOREINIT, 64 bytes at 0x395c40, sent once at init (0x277390):
+//   bSdInit 0x20, SdInitMode 0x24.
+// 0x6c tagspuEFFECT, 128 bytes at 0x395cc0 + 0x80*core (0x277390,
+//   0x2775a0): MMIX 0x2c, then the effect {core, mode, depth_L (16-bit),
+//   depth_R (16-bit), delay, feedback} at 0x30. Its callback ignores the reply.
+// 0x6d typespuCoreVolumeParam, 64 bytes at 0x395dc0 + 0x40*core (0x277650):
+//   core_no 0x20, MVOLL 0x24, MVOLR 0x26, VOLL 0x28, VOLR 0x2a (16-bit;
+//   the game sets all four to one value).
+// 0x67, 0x68 tagspuHDBDTrans: load and release sound bank n, 128 bytes at
+//   0x395e40 + 0x80*n (0x2779b0, 0x277840): hd_ee 0x20, hd_iop 0x24,
+//   hd_size 0x28, bd_ee 0x2c, bd_iop 0x30, bd_spu 0x34, bd_size 0x38,
+//   trans_blocsize 0x3c, bank_index 0x40, bUsed 0x44, dma_ch 0x48. The bank
+//   object (0x27a980) waits for thread_stat to read END_OK after a load and
+//   for rpc_stat to read END after a release. With no audio, both are
+//   reported done at once.
+// 0x69 tagspuVoiceKeyTrans, 2368 bytes: nReq (0x920) key requests of 48
+//   bytes from 0x20, each {core, bank, pg_no, note_no, pitch, velocity,
+//   voll (16-bit, 0x18), volr (16-bit, 0x1a), pan 0x1c, command_target
+//   (16-bit, 0x20), command_func (16-bit, 0x22), voice_id 0x24, user_id
+//   0x28}. Its callback counts completions (0x398990).
 @(private = "file")
 yukes_301 :: proc(fno: u32, buf: []u8, send_size: u32) -> (ok: bool) {
 	w := ([^]u32)(raw_data(buf))
@@ -46,11 +68,16 @@ yukes_301 :: proc(fno: u32, buf: []u8, send_size: u32) -> (ok: bool) {
 	case 0x6a, 0x6c, 0x6d:
 		return true
 	case 0x67:
-		if cpu.debug >= 1 {fmt.eprintfln("yukes: stream start %x", buf[:send_size])}
-		w[SLOT_READY] = 3
+		if cpu.debug >= 1 {
+			fmt.eprintfln("yukes: bank %d load hd %x+%x bd %x+%x to spu %x", w[0x10], w[8], w[10], w[11], w[14], w[13])
+		}
+		w[YIOP_THREAD_STAT] = YIOP_THREAD_END_OK
 		return true
 	case 0x68:
-		w[SLOT_STATE] = 2
+		w[YIOP_RPC_STAT] = YIOP_RPC_END
+		return true
+	case 0x69:
+		if cpu.debug >= 1 {fmt.eprintfln("yukes: %d key requests", w[0x920 / 4])}
 		return true
 	}
 	return false
