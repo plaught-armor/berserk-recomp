@@ -144,5 +144,5 @@ Shō* and its content belong to their respective owners; this project is not
 affiliated with them.
 
 The English text comes from the English v1.1 fan translation by
-TRANSLATORS-TBD. This repository does not include or distribute the
+Wesker90. This repository does not include or distribute the
 translation patch.
