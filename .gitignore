@@ -1,0 +1,19 @@
+# Game data: never committed
+*.iso
+*.ISO
+disc/
+*.bin
+*.BIN
+*.PAC
+*.AFS
+*.IMG
+SLPM_*
+SYSTEM.CNF
+PACLIST.H
+
+# Generated
+port/src/rec/
+build/
+*.o
+*.log
+__pycache__/
