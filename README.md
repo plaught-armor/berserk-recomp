@@ -10,9 +10,11 @@ This repository holds no game data. You build the port from a disc you own.
 ## Status
 
 - Tested on Linux only.
-- **Partial sound.** Music and the other CRI ADX streams (voice, movie
-  audio) play. Sound effects are still silent: the game's own sound module
-  (Yukes, IOP RPC 0x300/0x301) is stubbed.
+- Sound: music and the other CRI ADX streams (voice, movie audio) play.
+  Sound effects play through a reimplementation of the game's own sound
+  module (Yukes, IOP RPC 0x300/0x301): its HD/BD banks, key on and off,
+  volume, pause and the reverb. The effect mix, delay and feedback values
+  are not applied. Sound has only been checked as far as the first stage.
 - Boots through the title screen into the first stage. Later stages have not
   been played through on the port yet.
 
@@ -131,7 +133,7 @@ not committed.
 | Path | Contents |
 |---|---|
 | `port/src/main.odin` | Entry point: loads the executable from the disc and starts the runtime |
-| `port/src/yukes.odin` | HLE stub for the game's Yukes IOP module |
+| `port/src/yukes.odin` | HLE of the game's Yukes IOP sound module |
 | `tools/recomp.tsv` | Recompiler options |
 | `tools/code_ranges.tsv`, `tools/README.md` | Where the code is in SLPM_656.88, and why |
 | `tools/gate/` | Developer regression gate; tuned to the maintainer's machine, not needed to build or play |
