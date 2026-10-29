@@ -10,9 +10,9 @@ This repository holds no game data. You build the port from a disc you own.
 ## Status
 
 - Tested on Linux only.
-- **No sound.** The game's own sound and streaming module (Yukes, IOP RPC
-  0x300/0x301) and CRI ADX are stubbed, so music, voice and effects are
-  silent.
+- **Partial sound.** Music and the other CRI ADX streams (voice, movie
+  audio) play. Sound effects are still silent: the game's own sound module
+  (Yukes, IOP RPC 0x300/0x301) is stubbed.
 - Boots through the title screen into the first stage. Later stages have not
   been played through on the port yet.
 
@@ -20,7 +20,7 @@ This repository holds no game data. You build the port from a disc you own.
 
 - Odin `dev-2026-10`
 - SDL2 and Vulkan 1.3
-- ps-recomp at commit `6cb6c70` (the last one this port was tested against)
+- ps-recomp at commit `fced4d1` (the last one this port was tested against)
 - A dump of the disc with the English v1.1 patch applied
 
 ## 1. Extract the disc
@@ -50,8 +50,9 @@ Build ps-recomp's recompiler, then run it from this repository's root with
 <ps-recomp>/recomp-bin tools/recomp.tsv
 ```
 
-On a first build you have no VU1 capture yet (see step 5): comment out the
-`vu1_capture` line in `tools/recomp.tsv` until `port/vu1.cap` exists.
+On a first build you have no VU1 capture yet (see step 5); the recompiler
+warns about the missing `port/vu1.cap` and leaves that microcode to the VU
+interpreter.
 
 ## 3. Build the port
 
