@@ -6,6 +6,5 @@ runtime	ps:ps2
 cycles_per_insn	1
 package_insns	40000
 # No named sections in this ELF: code+data share one PROGBITS section.
-# Code ends at 0x2fe824; see tools/README.md.
-code_lo	0x100000
-code_hi	0x2fe824
+# Code is split by data; see tools/README.md.
+code_ranges	tools/code_ranges.tsv

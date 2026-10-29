@@ -7,8 +7,8 @@ disc and is never committed.
 ## Code range
 
 SLPM_656.88 (Metrowerks C 2.4.1.01) has no named sections: code and data
-share one PROGBITS section at 0x100000-0x35cd00, so the options file gives
-the range with `code_lo`/`code_hi`.
+share one PROGBITS section at 0x100000-0x35cd00, so `code_ranges.tsv` gives
+the code ranges; the rest of the image is scanned as data.
 
 - 0x100000-0x2fe824: game and library code. The last function returns at
   0x2fe81c (delay slot 0x2fe820), followed by nop padding.
@@ -17,5 +17,5 @@ the range with `code_lo`/`code_hi`.
   kernel patch code that runs at 0x8007xxxx, not on the EE. No `jal` in the
   code targets it.
 - 0x357080-0x357410: five static initializers, run by the loop at 0x21c7d0
-  through the table at 0x357410. Outside `code_hi`; a single range cannot
-  include them without the data between.
+  through the table at 0x357410. A second range, so the data between is
+  not decoded as code.

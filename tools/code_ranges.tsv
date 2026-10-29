@@ -1,0 +1,4 @@
+# Code ranges of SLPM_656.88, ascending; see README.md.
+lo	hi
+0x100000	0x2fe824
+0x357080	0x357410
