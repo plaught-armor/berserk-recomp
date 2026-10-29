@@ -85,7 +85,8 @@ odin build port/src -collection:ps=ps-recomp -define:ENV_PREFIX=GAME_ \
 
 The disc directory defaults to `disc`. Memory cards are saved to
 `memcard0/` and `memcard1/` in the current directory, or under `GAME_MC`
-if set.
+if set. On a fresh memory card the game first asks to create save data
+(YES/NO) before the title.
 
 ### Optional: native x86-64 code
 
