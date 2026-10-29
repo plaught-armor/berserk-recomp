@@ -8,3 +8,5 @@ package_insns	40000
 # No named sections in this ELF: code+data share one PROGBITS section.
 # Code is split by data; see tools/README.md.
 code_ranges	tools/code_ranges.tsv
+# VU1 microprogram capture (GAME_VU1_CAPTURE): compiled into rec/vu1.
+vu1_capture	port/vu1.cap

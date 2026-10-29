@@ -10,9 +10,14 @@ disc/
 SLPM_*
 SYSTEM.CNF
 PACLIST.H
+# VU1 microcode captured from the game (GAME_VU1_CAPTURE)
+*.cap
+# Memory card saves (GAME_MC, default: the run directory)
+memcard*/
 
 # Generated
 port/src/rec/
+/berserk
 build/
 *.o
 *.log
