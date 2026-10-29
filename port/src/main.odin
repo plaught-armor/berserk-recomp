@@ -22,6 +22,7 @@ main :: proc() {
 	// Window, sound, pads, pacing and the per-vblank host work (SHOT, DUMP,
 	// PRESS) all come from ps2/host.
 	if !host.platform_init("Berserk - Millennium Falcon") {os.exit(1)}
+	yukes_hook()
 	rec.register_all()
 	// NATIVE_FILE: recomp's native_out blob replacing the Odin functions.
 	if f := core.env("NATIVE_FILE"); f != "" {ps2.load_native(f)}

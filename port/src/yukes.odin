@@ -11,12 +11,68 @@
 package main
 
 import "core:fmt"
+import core "ps:core"
 import cpu "ps:ps2/cpu"
 import iop "ps:ps2/iop"
+import kernel "ps:ps2/kernel"
+import mem "ps:ps2/mem"
 
 yukes_init :: proc() {
 	iop.sif.servers[0x300] = yukes_300
 	iop.sif.servers[0x301] = yukes_301
+	core.snap_add(&yukes_report_addr)
+	core.snap_add(&yukes_key)
+}
+
+// The CoreInfo report (spuCORE_ReportThread 0x1608): every vblank the
+// module fills a tagspuCoreInfo with each voice's state (spuUpdateCore
+// 0x1468) and DMAs its 0xe40 bytes to the ee_address 0x6a gave (0x394e00).
+// It is 2 cores of 24 tagspuVoiceInfo, 0x4c bytes each (words): ENDX 0
+// (this voice's bit, 0 or 1), PITCH 1, NAX 2, VOLXL 3, VOLXR 4, LSAX 5,
+// ENVX 6, then from byte 0x1c the 48-byte key request that keyed the voice
+// on, zeroed by key off (yukes_key). The EE reads only ENVX, as "still
+// sounding", and the request's bank, pg_no and voice_id (0x29da80,
+// 0x29db60, 0x29ddc0), so PITCH and the VOLX words are left 0.
+@(private = "file")
+YUKES_VOICE_INFO :: 0x4c
+@(private = "file")
+YUKES_CORE_INFO :: 24 * YUKES_VOICE_INFO
+
+// The key request that keyed each voice on, by core and voice; zeroed by
+// key off.
+yukes_key: [2][24][48]u8
+
+// The report's EE address, 0 until 0x6a.
+@(private = "file")
+yukes_report_addr: u32
+
+@(private = "file")
+yukes_host_vblank: proc()
+
+// Report every vblank, after the host's own vblank work. Call after
+// host.platform_init, which sets the hook.
+yukes_hook :: proc() {
+	yukes_host_vblank = kernel.vblank_hook
+	kernel.vblank_hook = proc() {
+		yukes_host_vblank()
+		yukes_report()
+	}
+}
+
+@(private = "file")
+yukes_report :: proc() {
+	if yukes_report_addr == 0 {return}
+	out := mem.ram_slice(yukes_report_addr, 2 * YUKES_CORE_INFO)
+	for c in 0 ..< 2 {
+		for v in 0 ..< 24 {
+			p := out[c * YUKES_CORE_INFO + v * YUKES_VOICE_INFO:][:YUKES_VOICE_INFO]
+			s := iop.spu_voice_status(c, v)
+			w := ([^]u32)(raw_data(p))
+			w[0], w[1], w[2], w[3], w[4] = u32(s.endx), 0, s.nax, 0, 0
+			w[5], w[6] = s.lsax, u32(s.envx)
+			copy(p[0x1c:], yukes_key[c][v][:])
+		}
+	}
 }
 
 // fno 3: a command with no payload (0x277320).
@@ -41,8 +97,9 @@ YIOP_RPC_END :: 2
 YIOP_THREAD_END_OK :: 3
 
 // The commands, each a header and then (byte offsets):
-// 0x6a tagspuCOREINIT, 64 bytes at 0x395c40, sent once at init (0x277390):
-//   bSdInit 0x20, SdInitMode 0x24.
+// 0x6a tagspuCoreInfoParam, 64 bytes at 0x395c40, sent once at init
+//   (0x277390) after the EE clears 0xe40 bytes at 0x394e00: ee_address 0x20,
+//   where the module's CoreInfo report goes (spuCORE_ReportInit, 0x1684).
 // 0x6c tagspuEFFECT, 128 bytes at 0x395cc0 + 0x80*core (0x277390,
 //   0x2775a0): MMIX 0x2c, then the effect {core, mode, depth_L (16-bit),
 //   depth_R (16-bit), delay, feedback} at 0x30. Its callback ignores the reply.
@@ -65,7 +122,10 @@ YIOP_THREAD_END_OK :: 3
 yukes_301 :: proc(fno: u32, buf: []u8, send_size: u32) -> (ok: bool) {
 	w := ([^]u32)(raw_data(buf))
 	switch fno {
-	case 0x6a, 0x6c, 0x6d:
+	case 0x6a:
+		yukes_report_addr = w[8]
+		return true
+	case 0x6c, 0x6d:
 		return true
 	case 0x67:
 		if cpu.debug >= 1 {
