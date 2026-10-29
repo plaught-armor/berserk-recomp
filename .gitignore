@@ -22,3 +22,4 @@ build/
 *.o
 *.log
 __pycache__/
+/recomp-bin
