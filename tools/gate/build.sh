@@ -10,11 +10,18 @@ T=$(cd "$1" && pwd); mkdir -p "$2"; d=$(cd "$2" && pwd); shift 2
 POOL=${POOL:-4-7,12-15}
 pgrep -a odin && { echo "odin running, abort"; exit 1; }
 free -g | awk 'NR==2{if($7<14){print "free",$7,"<14 abort"; exit 1}}' || exit 1
+# recomp only warns on a missing vu1_capture and leaves that microcode to the
+# interpreter: same output, ~5x slower. So a typo'd path is an error here.
+cap=$(awk -F'\t' '$1=="vu1_capture"{print $2}' "$ROOT/tools/recomp.tsv")
+case $cap in ""|/*) capf=$cap;; *) capf=$ROOT/$cap;; esac
+[ -z "$cap" ] || [ -f "$capf" ] || { echo "vu1_capture $capf: no such file"; exit 1; }
 (cd "$T" && taskset -c "$POOL" odin build recomp -collection:ps=. -o:speed -out:"$d/recomp") 2>&1 | tail -3 || exit 1
 sed "s#^out\t.*#out\t$d/src/rec#; /^native/d" "$ROOT/tools/recomp.tsv" > "$d/gen.tsv"
 rm -rf "$d/src"; mkdir -p "$d/src"; cp "$ROOT"/port/src/*.odin "$d/src/"
 (cd "$ROOT" && taskset -c "$POOL" "$d/recomp" "$d/gen.tsv") > "$d/recomp.log" 2>&1 || { tail -5 "$d/recomp.log"; exit 1; }
 tail -2 "$d/recomp.log"
+n=$(sed -n 's/^\([0-9]*\) VU1 programs,.*/\1/p' "$d/recomp.log")
+[ -z "$cap" ] || [ "${n:-0}" -gt 0 ] || { echo "vu1_capture $capf: recomp compiled ${n:-no} VU1 programs"; exit 1; }
 (cd "$ROOT" && taskset -c "$POOL" python3 -I "$G/tv.py" "$d/time_build" odin build "$d/src" -collection:ps="$T" \
 	-define:ENV_PREFIX=GAME_ -use-separate-modules -o:speed "$@" -out:"$d/port") 2>&1 | tail -5 || exit 1
 ls -la "$d/port"
