@@ -10,3 +10,5 @@ package_insns	40000
 code_ranges	tools/code_ranges.tsv
 # VU1 microprogram capture (GAME_VU1_CAPTURE): compiled into rec/vu1.
 vu1_capture	port/vu1.cap
+# VU0 microprogram capture (GAME_VU0_CAPTURE): compiled into rec/vu0.
+vu0_capture	port/vu0.cap

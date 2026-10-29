@@ -66,9 +66,9 @@ Build ps-recomp's recompiler, then run it from this repository's root with
 git and must never be committed or shared. Run this step again after
 updating the ps-recomp submodule.
 
-On a first build you have no VU1 capture yet (see step 5); the recompiler
-warns about the missing `port/vu1.cap` and leaves that microcode to the VU
-interpreter.
+On a first build you have no VU captures yet (see step 5); the recompiler
+warns about the missing `port/vu1.cap` and `port/vu0.cap` and leaves that
+microcode to the VU interpreter.
 
 ## 3. Build the port
 
@@ -125,8 +125,12 @@ GAME_VU1_CAPTURE=port/vu1.cap ./berserk disc
 Then repeat steps 2 and 3. `tools/recomp.tsv` already reads the capture
 from `port/vu1.cap` through its `vu1_capture` line.
 
+The game's VU0 microprograms work the same way: capture them with
+`GAME_VU0_CAPTURE=port/vu0.cap`, which `tools/recomp.tsv` reads through its
+`vu0_capture` line.
+
 Runs append to the file, so several sessions covering different parts of the
-game can share one capture. The capture contains the game's microcode and is
+game can share one capture. A capture contains the game's microcode and is
 not committed.
 
 ## Layout
