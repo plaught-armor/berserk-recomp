@@ -4,6 +4,8 @@
 #   copies port/src/*.odin beside it and builds <outdir>/port. Extra arguments go to
 #   the port's odin build (e.g. -define:FALLBACK_COUNT=true).
 #   Runs on POOL (default 4-7,12-15); refuses to start while odin runs or with <14G free.
+#   Needs the VU captures named in tools/recomp.tsv (port/vu1.cap, port/vu0.cap);
+#   make them as in README step 5.
 set -u -o pipefail
 G=$(cd "$(dirname "$0")" && pwd); ROOT=$(cd "$G/../.." && pwd)
 T=$(cd "$1" && pwd); mkdir -p "$2"; d=$(cd "$2" && pwd); shift 2

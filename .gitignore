@@ -10,7 +10,7 @@ disc/
 SLPM_*
 SYSTEM.CNF
 PACLIST.H
-# VU1 microcode captured from the game (GAME_VU1_CAPTURE)
+# VU0/VU1 microcode captured from the game (GAME_VU0_CAPTURE, GAME_VU1_CAPTURE)
 *.cap
 # Memory card saves (GAME_MC, default: the run directory)
 memcard*/
@@ -21,5 +21,6 @@ port/src/rec/
 build/
 *.o
 *.log
+shot_*.ppm
 __pycache__/
 /recomp-bin

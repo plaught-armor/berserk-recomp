@@ -77,6 +77,8 @@ odin build port/src -collection:ps=ps-recomp -define:ENV_PREFIX=GAME_ \
 	-use-separate-modules -o:speed -out:berserk
 ```
 
+The build takes a few minutes and about 6 GB of RAM.
+
 ## 4. Run
 
 ```sh
@@ -86,7 +88,7 @@ odin build port/src -collection:ps=ps-recomp -define:ENV_PREFIX=GAME_ \
 The disc directory defaults to `disc`. Memory cards are saved to
 `memcard0/` and `memcard1/` in the current directory, or under `GAME_MC`
 if set. On a fresh memory card the game first asks to create save data
-(YES/NO) before the title.
+(YES/NO; NO is preselected, choose YES to make a save) before the title.
 
 ### Optional: native x86-64 code
 

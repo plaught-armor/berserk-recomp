@@ -12,6 +12,8 @@
 # own copy of the memory card directory MC (required; the press script expects
 # the card it was recorded with). DISC defaults to disc/ at the repository root.
 # Per run: wall time and max RSS in <outdir>/<bin>/<phase>/time.
+# Exits 1 when a run exits nonzero (rc in <outdir>/<bin>/<phase>/rc) or a shot
+# is missing, has no reference or differs from it.
 set -u
 W=$(cd "$(dirname "$0")" && pwd)
 D=${DISC:-$(cd "$W/../.." && pwd)/disc}
@@ -21,16 +23,19 @@ PRESS=$(cat "$W/press.txt")
 SHOTS=300,400,450,500,520,600,1000,1600,2600,2800,3000,8201,9900,10800
 POOL=${POOL:-4-7,12-15}
 TIER=$1; OUT=$2; shift 2
+# Absolute paths: each run cds into its outdir.
+mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
+D=$(cd "$D" && pwd) || { echo "DISC: $D not found"; exit 2; }
 BASE=${BASE:-}
 case $TIER in check|vu|perf) ;; *) echo "tier: check|vu|perf"; exit 2;; esac
 avail=$(free -g | awk '/^Mem:/{print $7}')
 [ "$avail" -lt 4 ] && { echo "avail ${avail}G < 4G, not starting"; exit 2; }
 run() { # bin phase env...
-	local b=$1 ph=$2; shift 2
+	local b ph=$2; b=$(realpath -s "$1"); shift 2 # -s keeps a symlink's name for the outdir
 	local o=$OUT/$(basename "$b")/$ph; mkdir -p "$o"
 	rm -rf "$o/mc"; cp -r "$MC" "$o/mc"
 	(cd "$o" && env GAME_MC="$o/mc" GAME_HEADLESS=1 GAME_SW=1 GAME_PRESS="$PRESS" GAME_VU1_STATS=1 "$@" \
-		taskset -c "$POOL" timeout 4000 python3 -I "$W/tv.py" time "${wrap[@]}" "$b" "$D" > log 2>&1; echo "$(basename "$b") $ph rc $?")
+		taskset -c "$POOL" timeout 4000 python3 -I "$W/tv.py" time "${wrap[@]}" "$b" "$D" > log 2>&1; rc=$?; echo $rc > rc; echo "$(basename "$b") $ph rc $rc")
 }
 vc=(); [ "$TIER" = vu ] && vc=(GAME_VUCHECK=1)
 wrap=(); [ "$TIER" = perf ] && wrap=(perf stat -x, -o pstat -e instructions:u,task-clock)
@@ -43,7 +48,7 @@ else
 	wait
 fi
 PH=check; [ "$TIER" = perf ] && PH=perf
-first=
+first=; bad=0
 for b in "$@"; do
 	n=$(basename "$b")
 	echo "== $n"
@@ -58,14 +63,20 @@ for b in "$@"; do
 		grep "stats: frame 1[12][0-9]00 " "$OUT/$n/perf/log" | awk '$3>=11700 && $3<=12000 {print "  " $3, $4, $5, $10, $11}'
 		grep "DBG vu1" "$OUT/$n/perf/log" | head -14
 	fi
-	# Shots against BASE, else against the first bin.
+	rc=$(cat "$OUT/$n/$PH/rc" 2>/dev/null)
+	[ "$rc" = 0 ] || { echo "run rc ${rc:-none}"; bad=1; }
+	# Shots against BASE, else against the first bin; the first bin without BASE
+	# is only checked for missing shots.
 	ref=${BASE:-$first}
-	if [ -n "$ref" ]; then
-		d=
-		for f in ${SHOTS//,/ }; do
-			if [ -f "$ref/shot_$f.ppm" ]; then cmp -s "$OUT/$n/$PH/shot_$f.ppm" "$ref/shot_$f.ppm" || d="$d $f"; else d="$d $f(nobase)"; fi
-		done
-		echo "shots vs $ref: ${d:- all same}"
-	fi
+	d=
+	for f in ${SHOTS//,/ }; do
+		if [ ! -f "$OUT/$n/$PH/shot_$f.ppm" ]; then d="$d $f(missing)"
+		elif [ -z "$ref" ]; then :
+		elif [ -f "$ref/shot_$f.ppm" ]; then cmp -s "$OUT/$n/$PH/shot_$f.ppm" "$ref/shot_$f.ppm" || d="$d $f"
+		else d="$d $f(nobase)"; fi
+	done
+	if [ -n "$ref" ]; then echo "shots vs $ref: ${d:- all same}"; else echo "shots: ${d:- all present}"; fi
+	[ -z "$d" ] || bad=1
 	[ -z "$first" ] && first=$OUT/$n/$PH
 done
+exit $bad
