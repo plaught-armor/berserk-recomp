@@ -232,7 +232,7 @@ YIOP_THREAD_END_OK :: 3
 // 0x6d typespuCoreVolumeParam, 64 bytes at 0x395dc0 + 0x40*core (0x277650):
 //   core_no 0x20, MVOLL 0x24, MVOLR 0x26, VOLL 0x28, VOLR 0x2a (16-bit;
 //   the game sets all four to one value). VOLL is the master voice volume
-//   key on scales by.
+//   key on scales by; MVOLL/MVOLR go to the core's SPU2 master volume.
 // 0x67, 0x68 tagspuHDBDTrans: load and release sound bank n, 128 bytes at
 //   0x395e40 + 0x80*n (0x2779b0, 0x277840): hd_ee 0x20, hd_iop 0x24,
 //   hd_size 0x28, bd_ee 0x2c, bd_iop 0x30, bd_spu 0x34, bd_size 0x38,
@@ -254,7 +254,10 @@ yukes_301 :: proc(fno: u32, buf: []u8, send_size: u32) -> (ok: bool) {
 		return true
 	case 0x6d:
 		c := w[8]
-		if c < CORES {yukes.master[c] = w[10] & 0xffff}
+		if c < CORES {
+			yukes.master[c] = w[10] & 0xffff
+			iop.spu_master(int(c), w[9] & 0xffff, w[9] >> 16)
+		}
 		return true
 	case 0x67:
 		yukes_load(w)
