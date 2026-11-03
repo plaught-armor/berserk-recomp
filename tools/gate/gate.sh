@@ -19,8 +19,9 @@ W=$(cd "$(dirname "$0")" && pwd)
 D=${DISC:-$(cd "$W/../.." && pwd)/disc}
 MC=${MC:?MC: memory card directory to start each run from}
 PRESS=$(cat "$W/press.txt")
-# 700, 900 and 1497 repeat 450 (Now Loading); 560 repeats 500.
-SHOTS=300,400,450,500,520,600,1000,1600,2600,2800,3000,8201,9900,10800
+# Shots count vblanks. 200 is the memory card dialog; 220-400 repeat 300
+# (Now Loading); 420-480, 680-700 and 900-920 are black between screens.
+SHOTS=200,300,500,520,600,1000,1600,2600,2800,3000,8201,9900,10800
 POOL=${POOL:-4-7,12-15}
 TIER=$1; OUT=$2; shift 2
 # Absolute paths: each run cds into its outdir.
