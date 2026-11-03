@@ -34,7 +34,7 @@ run() { # bin phase env...
 	local b ph=$2; b=$(realpath -s "$1"); shift 2 # -s keeps a symlink's name for the outdir
 	local o=$OUT/$(basename "$b")/$ph; mkdir -p "$o"
 	rm -rf "$o/mc"; cp -r "$MC" "$o/mc"
-	(cd "$o" && env GAME_MC="$o/mc" GAME_HEADLESS=1 GAME_SW=1 GAME_PRESS="$PRESS" GAME_VU1_STATS=1 "$@" \
+	(cd "$o" && env SDL_AUDIODRIVER=dummy GAME_MC="$o/mc" GAME_HEADLESS=1 GAME_SW=1 GAME_PRESS="$PRESS" GAME_VU1_STATS=1 "$@" \
 		taskset -c "$POOL" timeout 4000 python3 -I "$W/tv.py" time "${wrap[@]}" "$b" "$D" > log 2>&1; rc=$?; echo $rc > rc; echo "$(basename "$b") $ph rc $rc")
 }
 vc=(); [ "$TIER" = vu ] && vc=(GAME_VUCHECK=1)
