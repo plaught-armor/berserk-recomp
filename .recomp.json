@@ -1,0 +1,15 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Berserk: Millennium Falcon Hen Seima Senki no Shō",
+  "system": "PS2",
+  "type": "recomp",
+  "original": { "region": "Japan", "serial": "SLPM-65688" },
+  "project": "Berserk – Millennium Falcon on ps-recomp",
+  "status": "in-progress",
+  "targets": ["Linux"],
+  "toolchain": "ps-recomp",
+  "approach": "Static recompilation of the EE code to Odin, with the English v1.1 fan translation; Vulkan renderer",
+  "maintainers": [{ "name": "plaught-armor", "link": "https://github.com/plaught-armor" }],
+  "links": [{ "label": "ps-recomp", "url": "https://github.com/plaught-armor/ps-recomp" }],
+  "notes": "Boots through the title screen into the first stage. Later stages have not been played through yet."
+}
