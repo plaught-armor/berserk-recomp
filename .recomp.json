@@ -1,15 +1,43 @@
 {
   "$schema": "https://recomp.fyi/schema/v1.json",
+  "type": "recomp",
   "game": "Berserk: Millennium Falcon Hen Seima Senki no Shō",
   "system": "PS2",
-  "type": "recomp",
-  "original": { "region": "Japan", "serial": "SLPM-65688" },
-  "project": "Berserk – Millennium Falcon on ps-recomp",
   "status": "in-progress",
-  "targets": ["Linux"],
-  "toolchain": "ps-recomp",
+  "wikidata": "Q2365251",
+  "original": {
+    "region": "Japan",
+    "revision": "English v1.1 fan translation",
+    "serial": "SLPM-65688",
+    "sha1": "580c328e216ec3b6217e8f0a3a2516577eb88f89"
+  },
+  "project": "Berserk – Millennium Falcon on ps-recomp",
   "approach": "Static recompilation of the EE code to Odin, with the English v1.1 fan translation; Vulkan renderer",
-  "maintainers": [{ "name": "plaught-armor", "link": "https://github.com/plaught-armor" }],
-  "links": [{ "label": "ps-recomp", "url": "https://github.com/plaught-armor/ps-recomp" }],
+  "targets": [
+    "Linux"
+  ],
+  "toolchain": "ps-recomp",
+  "maintainers": [
+    {
+      "name": "plaught-armor",
+      "link": "https://github.com/plaught-armor"
+    }
+  ],
+  "links": [
+    {
+      "label": "ps-recomp",
+      "url": "https://github.com/plaught-armor/ps-recomp"
+    }
+  ],
+  "tags": [
+    "odin",
+    "vulkan",
+    "translation"
+  ],
+  "help": [
+    "Play-testing past the first stage",
+    "Sound effect mix, delay and feedback",
+    "Testing on Windows and macOS"
+  ],
   "notes": "Boots through the title screen into the first stage. Later stages have not been played through yet."
 }
